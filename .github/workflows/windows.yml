@@ -1,0 +1,50 @@
+name: Windows prototype
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Windows ${{ matrix.arch }}
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Publish portable app
+        shell: pwsh
+        run: ./scripts/build.ps1 -Arch ${{ matrix.arch }} -SmokeTest:($env:RUNNER_ARCH -ieq '${{ matrix.arch }}')
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WinStats-win-${{ matrix.arch }}
+          path: out/win-${{ matrix.arch }}/
+          if-no-files-found: error
+          retention-days: 30
+
+  arm-smoke:
+    name: Smoke test on Windows Arm64
+    needs: build
+    runs-on: windows-11-arm
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: WinStats-win-arm64
+          path: app
+      - shell: pwsh
+        run: |
+          $p = Start-Process './app/WinStats.exe' -ArgumentList '--self-test' -PassThru
+          if (!$p.WaitForExit(45000)) { $p.Kill(); throw 'Monitor/display smoke test timed out.' }
+          $log = Join-Path ([IO.Path]::GetTempPath()) 'WinStats-SmokeTest.log'
+          if (Test-Path $log) { Get-Content $log }
+          if ($p.ExitCode -ne 0) { throw "Monitor/display smoke test exited with $($p.ExitCode)." }
