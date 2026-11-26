@@ -90,6 +90,12 @@ internal sealed class DisplayApp : Application
         }
         catch (Exception error)
         {
+            if (args.FirstOrDefault() == "--smoke-test")
+            {
+                // A GUI process started by the native monitor has no inherited console.
+                var log = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "WinStats-SmokeTest.log");
+                System.IO.File.WriteAllText(log, error.ToString());
+            }
             Console.Error.WriteLine($"Display startup failed: {error.GetType().Name} (0x{error.HResult:X8}).");
             Finish(22);
         }

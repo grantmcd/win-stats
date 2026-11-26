@@ -32,7 +32,12 @@ Copy-Item "$repo/README.md" $out
 Copy-Item "$repo/THIRD-PARTY-NOTICES.txt" $out
 
 if ($SmokeTest) {
+    $log = Join-Path ([IO.Path]::GetTempPath()) 'WinStats-SmokeTest.log'
+    if (Test-Path $log) { Remove-Item $log }
     $process = Start-Process (Join-Path $out 'WinStats.exe') -ArgumentList '--self-test' -PassThru
     if (!$process.WaitForExit(45000)) { $process.Kill(); throw 'Monitor/display smoke test timed out.' }
-    if ($process.ExitCode -ne 0) { throw "Monitor/display smoke test failed with exit code $($process.ExitCode)." }
+    if ($process.ExitCode -ne 0) {
+        if (Test-Path $log) { Get-Content $log }
+        throw "Monitor/display smoke test failed with exit code $($process.ExitCode)."
+    }
 }
