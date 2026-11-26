@@ -1,40 +1,21 @@
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using WinRT;
 
 namespace WinStats.Display;
 
-internal static class Program
+public sealed partial class DisplayApp : Application
 {
-    [STAThread]
-    static int Main(string[] args)
-    {
-        ComWrappersSupport.InitializeComWrappers();
-        Application.Start(_ =>
-        {
-            var dispatcher = DispatcherQueue.GetForCurrentThread();
-            SynchronizationContext.SetSynchronizationContext(new DispatcherQueueSynchronizationContext(dispatcher));
-            new DisplayApp(args);
-        });
-        return Environment.ExitCode;
-    }
-}
-
-internal sealed class DisplayApp : Application
-{
-    private readonly string[] args;
+    private readonly string[] args = Environment.GetCommandLineArgs()[1..];
     private Window? window;
     private Session? session;
     private DispatcherTimer? timer;
 
-    public DisplayApp(string[] args) => this.args = args;
+    public DisplayApp() { }
 
     protected override async void OnLaunched(LaunchActivatedEventArgs e)
     {
         try
         {
-            Resources.MergedDictionaries.Add(new XamlControlsResources());
+            InitializeComponent();
             if (args.Length != 3 || !int.TryParse(args[1], out var pid) || !long.TryParse(args[2], out var hwnd))
             {
                 Environment.ExitCode = 2;
