@@ -1,0 +1,9 @@
+.vs/
+bin/
+obj/
+out/
+*.user
+*.suo
+*.pfx
+.env
+.env.*
