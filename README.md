@@ -27,4 +27,4 @@ On Windows with the .NET 10 SDK and Visual Studio C++ desktop build tools (inclu
 ./scripts/build.ps1 -Arch arm64
 ```
 
-The output is in `out/win-<architecture>/`. GitHub Actions publishes the full portable directory for each architecture. The smoke tests sample real CPU and memory counters and open a WinUI details window. Interactive verification on a Windows desktop covers taskbar placement, mixed DPI, Explorer restart, crowded taskbars, and idle resource use. The prototype renders current samples; history charts and sensor monitoring are outside this first build.
+The output is in `out/win-<architecture>/`. GitHub Actions publishes the full portable directory for each architecture. The smoke tests sample real CPU and memory counters and open a WinUI details window. They also construct the strip and verify that its window attaches to Explorer whenever the runner session provides a taskbar. Interactive verification on a Windows desktop covers taskbar placement, mixed DPI, Explorer restart, crowded taskbars, and idle resource use. The prototype renders current samples; history charts and sensor monitoring are outside this first build.

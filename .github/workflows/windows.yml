@@ -45,4 +45,6 @@ jobs:
         run: |
           $p = Start-Process './app/WinStats.exe' -ArgumentList '--self-test' -PassThru
           if (!$p.WaitForExit(45000)) { $p.Kill(); throw 'Monitor/display smoke test timed out.' }
+          $log = Join-Path ([IO.Path]::GetTempPath()) 'WinStats-SmokeTest.log'
+          if (Test-Path $log) { Get-Content $log }
           if ($p.ExitCode -ne 0) { throw "Monitor/display smoke test exited with $($p.ExitCode)." }

@@ -40,8 +40,8 @@ if ($SmokeTest) {
     if (Test-Path $log) { Remove-Item $log }
     $process = Start-Process (Join-Path $out 'WinStats.exe') -ArgumentList '--self-test' -PassThru
     if (!$process.WaitForExit(45000)) { $process.Kill(); throw 'Monitor/display smoke test timed out.' }
+    if (Test-Path $log) { Get-Content $log }
     if ($process.ExitCode -ne 0) {
-        if (Test-Path $log) { Get-Content $log }
         throw "Monitor/display smoke test failed with exit code $($process.ExitCode)."
     }
 }
