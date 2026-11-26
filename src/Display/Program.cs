@@ -35,17 +35,6 @@ internal sealed class DisplayApp : Application
         try
         {
             Resources.MergedDictionaries.Add(new XamlControlsResources());
-            if (args is ["--smoke-test"])
-            {
-                var panel = new DetailsWindow();
-                window = panel;
-                panel.Update(new(true, 7, 21, 48, 8L << 30, 16L << 30, 1300, 420));
-                panel.Activate();
-                await Task.Delay(250);
-                panel.Close();
-                Exit();
-                return;
-            }
             if (args.Length != 3 || !int.TryParse(args[1], out var pid) || !long.TryParse(args[2], out var hwnd))
             {
                 Environment.ExitCode = 2;
@@ -53,6 +42,20 @@ internal sealed class DisplayApp : Application
                 return;
             }
             session = new Session(pid, (nint)hwnd);
+            if (args[0] == "--smoke-test")
+            {
+                if (session.Read() is not { Cpu: >= 0 and <= 100, Memory: >= 0 and <= 100, Total: > 0 } reading)
+                    throw new System.IO.InvalidDataException("Missing live sample from native monitor.");
+                var panel = new DetailsWindow();
+                window = panel;
+                panel.Update(reading);
+                panel.Activate();
+                await Task.Delay(250);
+                panel.Close();
+                session.Dispose();
+                Exit();
+                return;
+            }
             var stripMode = args[0] == "--strip";
             Action<Reading> render;
             StripWindow? strip = null;
@@ -85,8 +88,9 @@ internal sealed class DisplayApp : Application
             if (strip != null) await strip.AttachAsync();
             if (!finishing) window.Activate();
         }
-        catch (Exception)
+        catch (Exception error)
         {
+            Console.Error.WriteLine($"Display startup failed: {error.GetType().Name} (0x{error.HResult:X8}).");
             Finish(22);
         }
     }

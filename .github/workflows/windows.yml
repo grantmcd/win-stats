@@ -43,11 +43,6 @@ jobs:
           path: app
       - shell: pwsh
         run: |
-          foreach ($test in @(
-            @{ Exe = './app/WinStats.exe'; Arg = '--self-test' }
-            @{ Exe = './app/Display/WinStats.Display.exe'; Arg = '--smoke-test' }
-          )) {
-            $p = Start-Process $test.Exe -ArgumentList $test.Arg -PassThru
-            if (!$p.WaitForExit(45000)) { $p.Kill(); throw "$($test.Exe) timed out" }
-            if ($p.ExitCode -ne 0) { throw "$($test.Exe) exited with $($p.ExitCode)" }
-          }
+          $p = Start-Process './app/WinStats.exe' -ArgumentList '--self-test' -PassThru
+          if (!$p.WaitForExit(45000)) { $p.Kill(); throw 'Monitor/display smoke test timed out.' }
+          if ($p.ExitCode -ne 0) { throw "Monitor/display smoke test exited with $($p.ExitCode)." }

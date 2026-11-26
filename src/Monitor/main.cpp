@@ -174,8 +174,9 @@ int selfTest() {
 }
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR args, int) {
-    if (std::wstring_view(args) == L"--self-test") return selfTest();
-    HANDLE single = CreateMutexW(nullptr, FALSE, L"Local\\WinStats.Monitor.Instance");
+    const bool testing = std::wstring_view(args) == L"--self-test";
+    if (testing && selfTest() != 0) return 1;
+    HANDLE single = CreateMutexW(nullptr, FALSE, testing ? nullptr : L"Local\\WinStats.Monitor.Instance");
     if (!single) return 1;
     if (GetLastError() == ERROR_ALREADY_EXISTS) {
         if (auto window = FindWindowW(windowClass, nullptr)) PostMessageW(window, openDetails, 0, 0);
@@ -190,6 +191,15 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR args, int) {
     if (!guard || !mapping) return 1;
     shared = static_cast<Snapshot*>(MapViewOfFile(mapping, FILE_MAP_WRITE, 0, 0, sizeof(Snapshot)));
     if (!shared) return 1;
+    if (testing) {
+        publish();
+        HANDLE display = launch(L"--smoke-test");
+        if (!display) return 2;
+        DWORD code = 3;
+        if (WaitForSingleObject(display, 30000) == WAIT_OBJECT_0) GetExitCodeProcess(display, &code);
+        CloseHandle(display);
+        return static_cast<int>(code);
+    }
     sample.stripEnabled = setting(L"ShowStrip", 1) != 0;
     sample.visibleMetrics = setting(L"StripMetrics", 7) & 7;
     if (!sample.visibleMetrics) sample.visibleMetrics = 7;
