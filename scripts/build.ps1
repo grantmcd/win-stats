@@ -23,6 +23,10 @@ $platform = if ($Arch -eq 'arm64') { 'ARM64' } else { 'x64' }
 & dotnet publish "$repo/src/Display/WinStats.Display.csproj" -c Release -r "win-$Arch" "-p:Platform=$platform" --self-contained true -p:DebugType=None -p:DebugSymbols=false -o "$out/Display"
 if ($LASTEXITCODE) { throw "Display publication failed ($LASTEXITCODE)." }
 
+if (!(Test-Path "$out/Display/resources.pri" -PathType Leaf)) {
+    throw 'The portable display is missing its WinUI resource index.'
+}
+
 # Unpackaged, self-contained Windows App SDK apps also need the VC++ runtime.
 # Include the redistributable DLLs app-locally for clean Windows installations.
 $crt = Get-ChildItem "$env:VCToolsRedistDir/$Arch/Microsoft.VC*.CRT" -Directory | Select-Object -First 1
